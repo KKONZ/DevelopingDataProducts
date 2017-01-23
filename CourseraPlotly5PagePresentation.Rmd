@@ -1,0 +1,63 @@
+---
+title: "Plotly Week 3"
+author: "Karl Konz"
+date: "January 15, 2017"
+output:
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+---
+##
+### Week 3, developing data products through Coursera and Johns Hopkins.
+Plotly graphics include importance bar chart and 2 scatters of the training and testing data.
+This project utilizes Plotly Graphics using Spotify data that was gathered via their API and chart downloads from their top charts site. To download the data for this project, run the DownloadTop200.R, ReadData.R, and the APIpull.R scripts from my github page here: https://github.com/KKONZ/SpotifyR. The directory names and locations will need to be changed and the SpotifyData folder needs to be empty so that the downloaded chart data can be downloaded there and rolled up into one dataset. Also you will need to register a Spotify App via their developer site and replace the credentials in the APIpull.R script. 
+
+### Code
+```{r, message=F, warning=F}
+set.seed(123)
+SpotifyData <- read.csv("C:/Users/karlk/Desktop/SpotifyData.csv", header = TRUE)
+library(caret);library(randomForest);library(plotly)
+Names <- c("liveness", "danceability", "energy", "key", "loudness", "mode", "ArtistName", "speechiness", "acousticness", "instrumentalness", "valence", "tempo", "duration_ms", "DateIndex", "time_signature", "MaxPosition", "Track.Name",  "minPosition", "lCountOnCharts", "TrackPopularity", "CountOnCharts", "lSumChartStreams")
+SpotifyData <- SpotifyData[ ,Names]; 
+SpotifyData$ldurationms <- log(SpotifyData$duration_ms); 
+InTrain <- createDataPartition(y=SpotifyData$lSumChartStreams, p = .60, list=FALSE)
+training <- SpotifyData[InTrain, ]; 
+testing <- SpotifyData[-InTrain, ];
+```
+
+##
+```{r, message=F, warning=F}
+# Code Continu
+control <- trainControl(method="repeatedcv", number=5, repeats=5)
+fitImportance <- train(lSumChartStreams ~ ., data=training[, -c(7, 17)], method="rf", importance = TRUE, 
+                       preProcess="scale", trControl=control);
+importance <- varImp(fitImportance)
+importance <- data.frame(row.names(importance$importance), importance$importance[ ,1])
+names(importance) <- c("TrackName", "Overall Importance"); importance <- importance[order(importance[, 2]),]
+rank <- seq(from = nrow(importance), to = 1,  by = -1); importance <- cbind(importance, rank)
+importance$text <- paste("Feature: ", importance[ ,1], ", Ranked #", importance$rank, sep="")
+x <- paste(LETTERS[importance$rank]);y <-importance[ ,2];text <- importance$text; data <- data.frame(x,y,text)
+p <- plot_ly(data, x = ~x, y = ~y, type = 'bar', text = text,marker = 
+               list(color = 'rgb(158,202,225)',line = list(color = 'rgb(8,48,107)',width = 1.5)))%>%
+  layout(title = "Random Forest Overall Importance Score", xaxis = list(title = ""),yaxis = list(title = "")); 
+fit <- lm(lSumChartStreams ~ DateIndex + minPosition + MaxPosition + lCountOnCharts,data = training);
+testing$Predicted <- predict(fit, testing); testing$Actual <- testing$lSumChartStreams;
+testing$Resid <- abs(testing$Actual - testing$Predicted); testing$HighestRank <- testing$minPosition; 
+pTest <- ggplot(data = testing,aes(y = Actual,x = Predicted,colour = HighestRank,size = Resid,alpha = minPosition)) +
+  geom_point(aes(text = paste(" Artist: ", ArtistName, ", Track: ", Track.Name, sep = "")))+
+  scale_color_gradient(low = "dodgerblue", high = "darkblue"); summary(fit)$coef
+```
+
+## Plotly Bar Importance Graphic
+```{r, echo = FALSE}
+p
+```
+
+##
+### Plotly Scatterplot with GGPlot Testing Data Visualized
+
+Finally to get a an idea of the accuracy of the model, the predicted estimates for log(SumOnCharts) are plotted against the actual observed values for the *Testing* that was not used to train the model and the predicted results in the plot below.
+
+```{r, echo = FALSE,fig.width= 10, message=F, warning=F}
+ggplotly(pTest)
+```
