@@ -1,5 +1,5 @@
 ---
-title: "Plotly Week 3"
+title: "Coursera Presentation"
 author: "Karl Konz"
 date: "January 15, 2017"
 output:
@@ -8,8 +8,8 @@ output:
     smaller: true
 ---
 ##
-### Week 3, developing data products through Coursera and Johns Hopkins.
-Plotly graphics include importance bar chart and 2 scatters of the training and testing data.
+### Week 4, presentation. Developing data products through Coursera and Johns Hopkins.
+Interactive graphics include importance bar chart and 2 scatters of the training and testing data.
 This project utilizes Plotly Graphics using Spotify data that was gathered via their API and chart downloads from their top charts site. To download the data for this project, run the DownloadTop200.R, ReadData.R, and the APIpull.R scripts from my github page here: https://github.com/KKONZ/SpotifyR. The directory names and locations will need to be changed and the SpotifyData folder needs to be empty so that the downloaded chart data can be downloaded there and rolled up into one dataset. Also you will need to register a Spotify App via their developer site and replace the credentials in the APIpull.R script. 
 
 ### Code
